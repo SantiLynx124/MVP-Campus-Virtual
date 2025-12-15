@@ -2,7 +2,7 @@
  * Página de inicio de sesión
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiMail, FiLock, FiBook } from 'react-icons/fi';
@@ -12,14 +12,25 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+   // Easter egg: mostrar imagen al escribir "enzo" en email o contraseña
+  const [showEaster, setShowEaster] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  const checkEaster = useMemo(() => {
+    const text = `${email} ${password}`.toLowerCase();
+    return text.includes('enzo');
+  }, [email, password]);
 
   useEffect(() => {
     if (isAuthenticated) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    setShowEaster(checkEaster);
+  }, [checkEaster]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -129,6 +140,16 @@ const Login = () => {
           </div>
         </form>
       </div>
+
+      {showEaster && (
+        <div className="easter-overlay">
+          <div className="easter-frame">
+            <div className="easter-text">
+              🦖 ¡ENZO DETECTADO! 🐶
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
