@@ -6,11 +6,13 @@ import axios from 'axios';
 
 // Usar variable de entorno en producción, o '/api' en desarrollo
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+    baseURL: import.meta.env.VITE_API_URL
+      ? `${import.meta.env.VITE_API_URL}/api`
+      : '/api',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
 
 // Interceptor para agregar el token a todas las peticiones
 api.interceptors.request.use(
