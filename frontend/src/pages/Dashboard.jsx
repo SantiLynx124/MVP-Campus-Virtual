@@ -8,13 +8,21 @@ import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
-import { FiBook, FiUsers, FiCalendar, FiArrowRight } from 'react-icons/fi';
+import { FiBook, FiUsers, FiCalendar, FiArrowRight, FiPlus } from 'react-icons/fi';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({
+    name: '',
+    code: '',
+    description: '',
+    semester: '',
+  });
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchCourses();
@@ -28,6 +36,28 @@ const Dashboard = () => {
       console.error('Error obteniendo cursos:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateCourse = async (e) => {
+    e.preventDefault();
+    setError('');
+    setCreating(true);
+    try {
+      const payload = {
+        name: form.name,
+        code: form.code,
+        description: form.description,
+        semester: form.semester || '2024-2',
+      };
+      await api.post('/courses', payload);
+      setForm({ name: '', code: '', description: '', semester: '' });
+      fetchCourses();
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Error al crear el curso';
+      setError(msg);
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -49,6 +79,79 @@ const Dashboard = () => {
               Selecciona un curso para ver sus materiales y contenido
             </p>
           </div>
+
+          {user?.role === 'docente' && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8 border border-primary-100">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Crear curso</h2>
+                  <p className="text-sm text-gray-500">Solo disponible para docentes</p>
+                </div>
+                <FiPlus className="h-6 w-6 text-primary-600" />
+              </div>
+
+              {error && (
+                <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded">
+                  {error}
+                </div>
+              )}
+
+              <form className="grid gap-4 md:grid-cols-2" onSubmit={handleCreateCourse}>
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Programación Web"
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Código *</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.code}
+                    onChange={(e) => setForm({ ...form, code: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="CS301"
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Semestre *</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.semester}
+                    onChange={(e) => setForm({ ...form, semester: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="2024-2"
+                  />
+                </div>
+                <div className="md:col-span-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                  <textarea
+                    rows={2}
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                    placeholder="Descripción breve del curso"
+                  />
+                </div>
+                <div className="md:col-span-2 flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {creating ? 'Creando...' : 'Crear curso'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
           {loading ? (
             <div className="flex justify-center items-center py-12">
@@ -111,5 +214,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
 
 
