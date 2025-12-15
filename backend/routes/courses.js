@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { getAllCourses, getCourseById, createCourse } = require('../controllers/coursesController');
+const { getAllCourses, getCourseById, createCourse, deleteCourse } = require('../controllers/coursesController');
 const { authenticateToken } = require('../middleware/auth');
 
 // Obtener todos los cursos (requiere autenticación)
@@ -17,7 +17,7 @@ router.get('/:id', authenticateToken, getCourseById);
 // Crear curso (solo docentes)
 router.post('/', authenticateToken, createCourse);
 
+// Eliminar curso (solo docente responsable)
+router.delete('/:id', authenticateToken, deleteCourse);
+
 module.exports = router;
-
-
-

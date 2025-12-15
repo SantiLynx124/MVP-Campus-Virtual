@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Navbar from '../components/Navbar';
 import api from '../services/api';
-import { FiBook, FiUsers, FiCalendar, FiArrowRight, FiPlus } from 'react-icons/fi';
+import { FiBook, FiUsers, FiCalendar, FiArrowRight, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -23,6 +23,7 @@ const Dashboard = () => {
     semester: '',
   });
   const [error, setError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     fetchCourses();
@@ -63,6 +64,23 @@ const Dashboard = () => {
 
   const handleCourseClick = (courseId) => {
     navigate(`/course/${courseId}`);
+  };
+
+  const handleDeleteCourse = async (e, course) => {
+    e.stopPropagation();
+    setDeleteError('');
+    const confirmDelete = window.confirm(
+      `¿Seguro que deseas eliminar el curso "${course.name}" y todos sus materiales asociados?`
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/courses/${course.id}`);
+      setCourses(courses.filter(c => c.id !== course.id));
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Error al eliminar el curso';
+      setDeleteError(msg);
+    }
   };
 
   return (
@@ -159,6 +177,11 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {deleteError && (
+                <div className="md:col-span-3 mb-2 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded">
+                  {deleteError}
+                </div>
+              )}
               {courses.map((course) => (
                 <div
                   key={course.id}
@@ -172,6 +195,16 @@ const Dashboard = () => {
                         {course.code}
                       </span>
                     </div>
+                    {user?.role === 'docente' && user?.name === course.instructor && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteCourse(e, course)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="Eliminar curso"
+                      >
+                        <FiTrash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                   
                   <h3 className="text-xl font-bold text-gray-900 mb-2">

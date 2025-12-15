@@ -1,9 +1,9 @@
 /**
  * Controlador de cursos
- * Maneja la lógica de obtención de cursos
+ * Maneja la lógica de obtención y gestión de cursos
  */
 
-const { getCourses, saveCourses } = require('../utils/dataStorage');
+const { getCourses, saveCourses, getMaterials, saveMaterials, getComments, saveComments } = require('../utils/dataStorage');
 const { findUserById } = require('../utils/userStorage');
 
 /**
@@ -37,12 +37,6 @@ const getCourseById = (req, res) => {
     console.error('Error obteniendo curso:', error);
     res.status(500).json({ error: 'Error al obtener el curso' });
   }
-};
-
-module.exports = {
-  getAllCourses,
-  getCourseById,
-  createCourse
 };
 
 /**
@@ -91,5 +85,59 @@ function createCourse(req, res) {
   }
 }
 
+/**
+ * Eliminar un curso (solo docentes, idealmente el mismo instructor)
+ */
+function deleteCourse(req, res) {
+  try {
+    const { id } = req.params;
+    const courseId = parseInt(id);
+    const userId = req.user?.id;
 
+    const user = findUserById(userId);
+    if (!user || user.role !== 'docente') {
+      return res.status(403).json({ error: 'Solo los docentes pueden eliminar cursos' });
+    }
 
+    const courses = getCourses();
+    const courseIndex = courses.findIndex(c => c.id === courseId);
+
+    if (courseIndex === -1) {
+      return res.status(404).json({ error: 'Curso no encontrado' });
+    }
+
+    const course = courses[courseIndex];
+
+    // Solo el docente que figura como instructor puede borrarlo (regla simple)
+    if (course.instructor !== user.name) {
+      return res.status(403).json({ error: 'Solo el docente responsable del curso puede eliminarlo' });
+    }
+
+    // Eliminar materiales y comentarios asociados al curso
+    const materials = getMaterials();
+    const courseMaterials = materials.filter(m => m.courseId === courseId);
+    const remainingMaterials = materials.filter(m => m.courseId !== courseId);
+    saveMaterials(remainingMaterials);
+
+    const comments = getComments();
+    const materialIds = new Set(courseMaterials.map(m => m.id));
+    const remainingComments = comments.filter(c => !materialIds.has(c.materialId));
+    saveComments(remainingComments);
+
+    // Eliminar el curso
+    courses.splice(courseIndex, 1);
+    saveCourses(courses);
+
+    res.json({ message: 'Curso y materiales asociados eliminados correctamente' });
+  } catch (error) {
+    console.error('Error eliminando curso:', error);
+    res.status(500).json({ error: 'Error al eliminar el curso' });
+  }
+}
+
+module.exports = {
+  getAllCourses,
+  getCourseById,
+  createCourse,
+  deleteCourse
+};
