@@ -29,3 +29,4 @@ const authenticateToken = (req, res, next) => {
 
 module.exports = { authenticateToken, JWT_SECRET };
 
+

@@ -9,6 +9,9 @@ import { FiHeart, FiMessageSquare, FiFileText, FiLink, FiBook, FiUser, FiEdit2, 
 import CommentSection from './CommentSection';
 import MaterialEdit from './MaterialEdit';
 
+// Base para servir archivos; en prod usa VITE_API_URL, en dev usa la misma ruta
+const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+
 const MaterialCard = ({ material, comments, onLike, onCommentAdded, onMaterialUpdated, onMaterialDeleted, currentUserId }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -186,10 +189,10 @@ const MaterialCard = ({ material, comments, onLike, onCommentAdded, onMaterialUp
 
       {material.type === 'pdf' && material.url && (
         <a
-          href={`http://localhost:5000${material.url}`}
+          href={`${apiBase || ''}${material.url}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="block mb-4 text-primary-600 hover:text-primary-700 text-sm"
+          className="block mb-4 text-primary-600 hover:text-primary-700 text-sm break-all"
         >
           📄 {material.fileName || 'Ver archivo PDF'}
         </a>

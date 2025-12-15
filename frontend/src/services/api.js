@@ -4,15 +4,17 @@
 
 import axios from 'axios';
 
-// Usar variable de entorno en producción, o '/api' en desarrollo
+// Normaliza la base URL para evitar dobles slash y soportar VITE_API_URL
+const apiBase = (() => {
+  const envUrl = import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, '');
+  return envUrl ? `${envUrl}/api` : '/api';
+})();
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL
-      ? `${import.meta.env.VITE_API_URL}/api`
-      : '/api',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  baseURL: apiBase,
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 15000, // 15s de espera para prevenir cuelgues
+});
 
 // Interceptor para agregar el token a todas las peticiones
 api.interceptors.request.use(
@@ -23,22 +25,27 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Interceptor para manejar errores de autenticación
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    const status = error.response?.status;
+
+    if (status === 401 || status === 403) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Evitar loop si ya estamos en login
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
     }
+
     return Promise.reject(error);
   }
 );
 
 export default api;
+
 

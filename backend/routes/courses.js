@@ -16,3 +16,4 @@ router.get('/:id', authenticateToken, getCourseById);
 
 module.exports = router;
 
+

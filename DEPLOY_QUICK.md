@@ -68,3 +68,4 @@ VITE_API_URL=https://tu-backend.railway.app
 - Implementa hash de contraseñas con bcrypt
 - Agrega rate limiting
 
+
