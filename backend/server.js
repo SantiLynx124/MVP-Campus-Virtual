@@ -19,21 +19,29 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 // Configurar CORS para permitir requests desde el frontend
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
+const allowedOrigins = (process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000'];
+  : ['http://localhost:3000']
+).map(o => o.trim()).filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir requests sin origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('localhost')) {
-      callback(null, true);
-    } else {
-      callback(new Error('No permitido por CORS'));
+    // Permitir sin origin (Postman, curl) o localhost
+    if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
     }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+}));
+
+// 👇 Responder preflight con la misma política
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
